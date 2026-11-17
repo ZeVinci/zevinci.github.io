@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zevinci — carnet de loisirs</title>
+<meta name="description" content="Courses, concerts, lectures, séries et cinéma : le carnet de loisirs de Vincent.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@600&display=swap">
+<style>
+  :root {
+    --bg: #EEF0F3; --card: #FFFFFF; --line: #E3E5EA; --soft: #F4F5F7;
+    --ink: #16181D; --ink2: #3F4450; --muted: #5B616E;
+    --courses: #C2410C; --concerts: #7E22CE; --lectures: #0F766E; --series: #1D4ED8; --cine: #B45309;
+    --display: 'Space Grotesk', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: Inter, system-ui, sans-serif; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 56px 32px 64px; display: flex; flex-direction: column; gap: 40px; }
+  header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; }
+  .kicker { font-size: 13px; font-weight: 600; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+  h1 { margin: 12px 0 0; font-family: var(--display); font-size: clamp(34px, 5vw, 48px); line-height: 1.05; font-weight: 600; max-width: 720px; }
+  .total { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .total b { font-family: var(--display); font-size: 40px; font-weight: 600; }
+  .total span { font-size: 13px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+  .card { display: flex; flex-direction: column; gap: 18px; padding: 24px; background: var(--card); border: 1px solid var(--line);
+          border-radius: 16px; text-decoration: none; color: var(--ink); min-width: 0; transition: transform .15s, box-shadow .15s; }
+  a.card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(22, 24, 29, .08); }
+  a.card:focus-visible { outline: 3px solid var(--c); outline-offset: 3px; }
+  .top { display: flex; align-items: center; justify-content: space-between; }
+  .name { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 18px; font-weight: 600; }
+  .open { font-size: 14px; font-weight: 600; color: var(--c); }
+  .big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .big b { font-family: var(--display); font-size: 56px; font-weight: 600; line-height: 1; color: var(--c); }
+  .big span { font-size: 14px; color: var(--muted); }
+  .spark { display: flex; align-items: flex-end; gap: 3px; height: 44px; }
+  .spark div { flex: 1 1 0; border-radius: 2px; background: color-mix(in srgb, var(--c) 33%, transparent); min-height: 3px; }
+  .spark div:last-child { background: var(--c); }
+  .years { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: -12px; }
+  .last { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; background: var(--soft); border-radius: 10px; }
+  .last small { font-size: 12px; color: var(--muted); }
+  .last strong { font-size: 16px; }
+  .last span { font-size: 13px; color: var(--ink2); }
+  .stats { display: flex; gap: 16px; }
+  .stats div { display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-width: 0; }
+  .stats small { font-size: 12px; color: var(--muted); }
+  .stats strong { font-size: 15px; overflow-wrap: anywhere; }
+  .year h2 { margin: 0 0 8px; font-family: var(--display); font-size: 36px; font-weight: 600; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+  .row:last-child { border-bottom: 0; }
+  .row b { font-family: var(--display); font-size: 28px; font-weight: 600; width: 56px; }
+  .row span { font-size: 15px; color: var(--muted); }
+  .err { color: #B42318; font-size: 13px; }
+  @media (max-width: 520px) { .wrap { padding: 32px 16px 48px; } .total { align-items: flex-start; } }
+  @media (prefers-reduced-motion: reduce) { a.card { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker">Zevinci · carnet de loisirs</div>
+      <h1>Ce que je cours, écoute, lis et regarde.</h1>
+    </div>
+    <div class="total"><b id="total">…</b><span>entrées au total</span></div>
+  </header>
+  <main class="grid" id="grid" aria-live="polite"></main>
+</div>
+
+<script>
+// ---- Configuration : une entrée par rubrique (chemins relatifs à la racine du site) ----
+const SECTIONS = [
+  { key: 'courses',  name: 'Courses',  href: '/courses/',  data: '/courses/data/courses.json' },
+  { key: 'concerts', name: 'Concerts', href: '/concerts/', data: '/concerts/concerts.json' },
+  { key: 'lectures', name: 'Lectures', href: '/lectures/', data: '/lectures/lectures.json' },
+  { key: 'series',   name: 'Séries',   href: '/series/',   data: '/series/series.json' },
+  { key: 'cine',     name: 'Cinéma',   href: '/cine/',     data: '/cine/films.json' },
+];
+
+const ICONS = {
+  courses:  '<path d="M13 4a2 2 0 1 0 .01 0"/><path d="M7 21l3-6 3 2v4"/><path d="M10 15l1-5 4 2 3-1"/><path d="M6 11l3-2"/>',
+  concerts: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+  lectures: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/>',
+  series:   '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 21h8"/><path d="M8 3l4 3 4-3"/>',
+  cine:     '<rect x="3" y="7" width="18" height="13" rx="1"/><path d="M3 7l3-4h4l-3 4"/><path d="M10 7l3-4h4l-3 4"/>',
+};
+const icon = (k, size = 22) =>
+  `<svg aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="var(--${k})" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]}</svg>`;
+
+const YEAR = new Date().getFullYear();
+const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtDate = iso => { const [y, m, d] = iso.split('-').map(Number); return `${d === 1 ? '1er' : d} ${MOIS[m - 1]} ${y}`; };
+const fmtMonth = (y, m) => (m ? `${MOIS[m - 1]} ${y}` : `${y}`);
+const toSec = t => t ? t.split(':').map(Number).reduce((a, v) => a * 60 + v, 0) : Infinity;
+function topOf(values) {
+  const n = new Map();
+  values.forEach(v => v && n.set(v, (n.get(v) || 0) + 1));
+  return [...n.entries()].sort((a, b) => b[1] - a[1])[0] || ['—', 0];
+}
+function perYear(years, from) {
+  const start = Math.max(from, Math.min(...years));
+  const out = [];
+  for (let y = start; y <= YEAR; y++) out.push(years.filter(v => v === y).length);
+  return { start, vals: out };
+}
+
+// ---- Un résumé par rubrique : total, histogramme annuel, dernière entrée, deux stats, chiffre de l'année ----
+const SUMMARIZE = {
+  courses(d) {
+    const s = [...d].sort((a, b) => a.date.localeCompare(b.date));
+    const last = s.at(-1);
+    const years = s.map(c => +c.date.slice(0, 4));
+    const marathons = s.filter(c => c.categorie === 'marathon');
+    const best = marathons.reduce((b, c) => toSec(c.chrono_officiel || c.chrono_strava) < toSec(b.chrono_officiel || b.chrono_strava) ? c : b, marathons[0]);
+    const longest = s.reduce((b, c) => (c.distance_km || 0) > (b.distance_km || 0) ? c : b, s[0]);
+    return {
+      total: s.length, unit: `courses depuis ${years[0]}`, years: perYear(years, years[0]),
+      last: ['Dernière', last.nom, `${fmtDate(last.date)} · ${last.chrono_officiel || last.chrono_strava}`],
+      stats: [['Record marathon', best ? (best.chrono_officiel || best.chrono_strava) : '—'], ['Plus long', `${Math.round(longest.distance_km)} km`]],
+      thisYear: [years.filter(y => y === YEAR).length, 'courses'],
+    };
+  },
+  concerts(d) {
+    const s = [...d].sort((a, b) => a.date.localeCompare(b.date));
+    const last = s.at(-1);
+    const years = s.map(c => +c.date.slice(0, 4));
+    const [artist, nA] = topOf(s.flatMap(c => c.artists));
+    const [venue, nV] = topOf(s.map(c => c.venue));
+    const title = last.festival && last.artists.length > 2 ? last.festival : last.artists.join(' · ');
+    return {
+      total: s.length, unit: `soirées depuis ${years[0]}`, years: perYear(years, years[0]),
+      last: ['Dernier', title, `${last.venue} · ${fmtDate(last.date)}`],
+      stats: [['Le plus vu', `${artist} ×${nA}`], ['Salle n°1', `${venue} ×${nV}`]],
+      thisYear: [years.filter(y => y === YEAR).length, 'concerts'],
+    };
+  },
+  lectures(d) {
+    const s = [...d.livres].sort((a, b) => a.annee - b.annee || (a.mois || 0) - (b.mois || 0) || a.id - b.id);
+    const last = s.at(-1);
+    const years = s.map(l => l.annee);
+    const [author, n] = topOf(s.map(l => l.auteur));
+    const nYear = years.filter(y => y === YEAR).length;
+    return {
+      total: s.length, unit: `livres depuis ${years[0]}`, years: perYear(years, years[0]),
+      last: ['Dernier livre', last.titre, `${last.auteur} · ${fmtMonth(last.annee, last.mois)}`],
+      stats: [['Auteur n°1', `${author} ×${n}`], [`En ${YEAR}`, `${nYear} livre${nYear > 1 ? 's' : ''}`]],
+      thisYear: [nYear, 'livres'],
+    };
+  },
+  series(d) {
+    const v = d.visionnages;
+    const dated = v.filter(x => /^\d{4}$/.test(x.periode));
+    const years = dated.map(x => +x.periode);
+    const last = v.at(-1);
+    const show = d.series[last.cle] || {};
+    const yearViews = dated.filter(x => +x.periode === YEAR);
+    const seasons = yearViews.reduce((n, x) => n + x.saisons.length, 0);
+    const fav = [...yearViews].reverse().find(x => x.coup_de_coeur);
+    const sLabel = last.saisons.length > 1 ? `saisons ${last.saisons[0]}–${last.saisons.at(-1)}` : `saison ${last.saisons[0]}`;
+    return {
+      total: Object.keys(d.series).length, unit: 'séries suivies', years: perYear(years, Math.min(...years)),
+      last: ['Récemment', show.titre || last.cle, `${sLabel} · ${last.periode}`],
+      // « coup_de_coeur » n'existe pas forcément dans les données : sinon, diffuseur le plus fréquent
+      stats: [fav ? [`Coup de cœur ${YEAR}`, d.series[fav.cle]?.titre || fav.cle]
+                  : ['Diffuseur n°1', (([n, c]) => `${n} ×${c}`)(topOf(Object.values(d.series).map(x => x.diffuseur)))],
+              [`Saisons ${YEAR}`, String(seasons)]],
+      thisYear: [seasons, 'saisons'],
+    };
+  },
+  cine(d) {
+    const s = d.map((f, i) => ({ ...f, i })).sort((a, b) => a.annee - b.annee || (a.mois || 0) - (b.mois || 0) || a.i - b.i);
+    const last = s.at(-1);
+    const years = s.map(f => f.annee);
+    const [genre] = topOf(s.map(f => f.genre));
+    const nYear = years.filter(y => y === YEAR).length;
+    return {
+      total: s.length, unit: `films en salle depuis ${years[0]}`, years: perYear(years, years[0]),
+      last: ['Dernière séance', last.titre, `${last.realisateur} · ${fmtMonth(last.annee, last.mois)}`],
+      stats: [['Genre n°1', genre], [`En ${YEAR}`, `${nYear} film${nYear > 1 ? 's' : ''}`]],
+      thisYear: [nYear, 'films'],
+    };
+  },
+};
+
+function cardHTML(sec, r) {
+  const max = Math.max(1, ...r.years.vals);
+  const bars = r.years.vals.map(v => `<div style="height:${Math.max(3, Math.round(v / max * 44))}px"></div>`).join('');
+  return `<a class="card" href="${sec.href}" style="--c: var(--${sec.key})">
+    <div class="top"><div class="name">${icon(sec.key)}${sec.name}</div><span class="open">Ouvrir →</span></div>
+    <div class="big"><b>${r.total}</b><span>${esc(r.unit)}</span></div>
+    <div class="spark" aria-hidden="true">${bars}</div>
+    <div class="years" aria-hidden="true"><span>${r.years.start}</span><span>${YEAR}</span></div>
+    <div class="last"><small>${esc(r.last[0])}</small><strong>${esc(r.last[1])}</strong><span>${esc(r.last[2])}</span></div>
+    <div class="stats">${r.stats.map(([a, b]) => `<div><small>${esc(a)}</small><strong>${esc(b)}</strong></div>`).join('')}</div>
+  </a>`;
+}
+function errorHTML(sec) {
+  return `<a class="card" href="${sec.href}" style="--c: var(--${sec.key})">
+    <div class="top"><div class="name">${icon(sec.key)}${sec.name}</div><span class="open">Ouvrir →</span></div>
+    <p class="err">Données indisponibles pour le moment.</p></a>`;
+}
+
+async function load(sec) {
+  try {
+    const res = await fetch(sec.data, { cache: 'no-cache' });
+    if (!res.ok) throw new Error(res.status);
+    return SUMMARIZE[sec.key](await res.json());
+  } catch (e) {
+    console.warn(`[accueil] ${sec.key} :`, e);
+    return null;
+  }
+}
+
+(async () => {
+  const results = await Promise.all(SECTIONS.map(load));
+  const grid = document.getElementById('grid');
+  grid.innerHTML = SECTIONS.map((sec, i) => results[i] ? cardHTML(sec, results[i]) : errorHTML(sec)).join('')
+    + `<section class="card year" aria-labelledby="y"><div class="kicker">Cette année</div><h2 id="y">${YEAR}</h2>`
+    + SECTIONS.map((sec, i) => results[i]
+        ? `<a class="row" href="${sec.href}">${icon(sec.key, 18)}<b>${results[i].thisYear[0]}</b><span>${results[i].thisYear[1]}</span></a>` : '').join('')
+    + `</section>`;
+  const total = results.reduce((n, r) => n + (r ? r.total : 0), 0);
+  document.getElementById('total').textContent = total.toLocaleString('fr-FR');
+})();
+</script>
+</body>
+</html>
