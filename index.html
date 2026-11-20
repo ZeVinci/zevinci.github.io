@@ -114,12 +114,15 @@ const SUMMARIZE = {
     const last = s.at(-1);
     const years = s.map(c => +c.date.slice(0, 4));
     const marathons = s.filter(c => c.categorie === 'marathon');
-    const best = marathons.reduce((b, c) => toSec(c.chrono_officiel || c.chrono_strava) < toSec(b.chrono_officiel || b.chrono_strava) ? c : b, marathons[0]);
+    // Le site des courses publie des chronos arrondis à la minute (chrono, t) ; les chronos exacts sont chiffrés.
+    const sec = c => (c.chrono_officiel || c.chrono_strava) ? toSec(c.chrono_officiel || c.chrono_strava) : c.t;
+    const ch = c => c.chrono_officiel || c.chrono_strava || c.chrono;
+    const best = marathons.reduce((b, c) => sec(c) < sec(b) ? c : b, marathons[0]);
     const longest = s.reduce((b, c) => (c.distance_km || 0) > (b.distance_km || 0) ? c : b, s[0]);
     return {
       total: s.length, unit: `courses depuis ${years[0]}`, years: perYear(years, years[0]),
-      last: ['Dernière', last.nom, `${fmtDate(last.date)} · ${last.chrono_officiel || last.chrono_strava}`],
-      stats: [['Record marathon', best ? (best.chrono_officiel || best.chrono_strava) : '—'], ['Plus long', `${Math.round(longest.distance_km)} km`]],
+      last: ['Dernière', last.nom, `${fmtDate(last.date)} · ${ch(last)}`],
+      stats: [['Record marathon', best ? ch(best) : '—'], ['Plus long', `${Math.round(longest.distance_km)} km`]],
       thisYear: [years.filter(y => y === YEAR).length, 'courses'],
     };
   },
