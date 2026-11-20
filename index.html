@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zevinci — carnet de loisirs</title>
-<meta name="description" content="Courses, concerts, lectures, séries et cinéma : le carnet de loisirs de Vincent.">
+<meta name="description" content="Courses, concerts, spectacles, lectures, séries et cinéma : le carnet de loisirs de Vincent.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@600&display=swap">
@@ -12,7 +12,7 @@
   :root {
     --bg: #EEF0F3; --card: #FFFFFF; --line: #E3E5EA; --soft: #F4F5F7;
     --ink: #16181D; --ink2: #3F4450; --muted: #5B616E;
-    --courses: #C2410C; --concerts: #7E22CE; --lectures: #0F766E; --series: #1D4ED8; --cine: #B45309;
+    --courses: #C2410C; --concerts: #7E22CE; --lectures: #0F766E; --series: #1D4ED8; --cine: #B45309; --spectacles: #BE123C;
     --display: 'Space Grotesk', system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
@@ -74,6 +74,7 @@
 const SECTIONS = [
   { key: 'courses',  name: 'Courses',  href: '/courses/',  data: '/courses/data/courses.json' },
   { key: 'concerts', name: 'Concerts', href: '/concerts/', data: '/concerts/concerts.json' },
+  { key: 'spectacles', name: 'Spectacles', href: '/spectacles/', data: '/spectacles/spectacles.json' },
   { key: 'lectures', name: 'Lectures', href: '/lectures/', data: '/lectures/lectures.json' },
   { key: 'series',   name: 'Séries',   href: '/series/',   data: '/series/series.json' },
   { key: 'cine',     name: 'Cinéma',   href: '/cine/',     data: '/cine/films.json' },
@@ -84,6 +85,7 @@ const ICONS = {
   concerts: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
   lectures: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/>',
   series:   '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 21h8"/><path d="M8 3l4 3 4-3"/>',
+  spectacles: '<path d="M4 4h16v16H4z"/><path d="M4 4c2 5 2 10 0 16"/><path d="M20 4c-2 5-2 10 0 16"/><path d="M8 20h8"/><path d="M4 4h16"/>',
   cine:     '<rect x="3" y="7" width="18" height="13" rx="1"/><path d="M3 7l3-4h4l-3 4"/><path d="M10 7l3-4h4l-3 4"/>',
 };
 const icon = (k, size = 22) =>
@@ -138,6 +140,20 @@ const SUMMARIZE = {
       last: ['Dernier', title, `${last.venue} · ${fmtDate(last.date)}`],
       stats: [['Le plus vu', `${artist} ×${nA}`], ['Salle n°1', `${venue} ×${nV}`]],
       thisYear: [years.filter(y => y === YEAR).length, 'concerts'],
+    };
+  },
+  spectacles(d) {
+    const s = [...d].filter(x => x.date).sort((a, b) => a.date.localeCompare(b.date));
+    const last = s.at(-1);
+    const years = s.map(x => +x.date.slice(0, 4));
+    const [cat, nC] = topOf(s.map(x => x.categorie));
+    const [venue, nV] = topOf(s.map(x => x.salle));
+    const who = last.artiste || last.mise_en_scene || last.auteur;
+    return {
+      total: s.length, unit: `spectacles depuis ${years[0]}`, years: perYear(years, years[0]),
+      last: ['Dernier', last.titre, [who, last.salle, fmtDate(last.date)].filter(Boolean).join(' · ')],
+      stats: [['Genre n°1', `${cat} ×${nC}`], ['Salle n°1', `${venue} ×${nV}`]],
+      thisYear: [years.filter(y => y === YEAR).length, 'spectacles'],
     };
   },
   lectures(d) {
